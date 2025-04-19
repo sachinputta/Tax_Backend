@@ -87,7 +87,7 @@ public class CustomerController {
 		return ResponseEntity.ok(response);
 	}
 
-	@PreAuthorize("hasAnyRole('Customer')")
+//	@PreAuthorize("hasAnyRole('Customer')")
 	@PostMapping("/get-profile-details")
 	public ResponseEntity<Customer> getCustomer(@RequestBody Map<String, String> request) {
 	    String customerId = request.get("customerId");
