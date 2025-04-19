@@ -49,30 +49,30 @@ public class SecurityConfiguration {
 		return new BCryptPasswordEncoder(12);
 	}
 
-//	@Bean
-//	public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager)
-//			throws Exception {
-//		return http.csrf(customizer -> customizer.disable())
-//				.authorizeHttpRequests(request -> request.requestMatchers("/login", "/addAdmin","/addCustomer").permitAll()
-//						.anyRequest().authenticated())
-//				.authenticationProvider(authenticationProvider(userDetailsService()))
-//				.httpBasic(Customizer.withDefaults())
-//				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();
-//	}
-	
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager)
-	        throws Exception {
-	    return http.csrf(csrf -> csrf.disable())
-	            .authorizeHttpRequests(auth -> auth
-	                    .requestMatchers("/login", "/addAdmin", "/addCustomer").permitAll()
-	                    .anyRequest().authenticated())
-	            .authenticationProvider(authenticationProvider(userDetailsService()))
-	            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-	            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-	            .build();
+			throws Exception {
+		return http.csrf(customizer -> customizer.disable())
+				.authorizeHttpRequests(request -> request.requestMatchers("/login", "/addAdmin","/addCustomer").permitAll()
+						.anyRequest().authenticated())
+				.authenticationProvider(authenticationProvider(userDetailsService()))
+				.httpBasic(Customizer.withDefaults())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();
 	}
+	
+//	@Bean
+//	public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager)
+//	        throws Exception {
+//	    return http.csrf(csrf -> csrf.disable())
+//	            .authorizeHttpRequests(auth -> auth
+//	                    .requestMatchers("/login", "/addAdmin", "/addCustomer").permitAll()
+//	                    .anyRequest().authenticated())
+//	            .authenticationProvider(authenticationProvider(userDetailsService()))
+//	            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//	            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+//	            .build();
+//	}
 
 	
 	
