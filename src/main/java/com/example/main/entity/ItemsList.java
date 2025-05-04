@@ -23,4 +23,8 @@ public class ItemsList {
     private Double rate;
 
     private String usageUnit;
+    
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 }

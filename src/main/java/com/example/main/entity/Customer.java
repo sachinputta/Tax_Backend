@@ -39,6 +39,9 @@ public class Customer implements UserDetails {
 	private String imagePath;
 	private String state;
 	private String country;
+	private String pan;
+	private String gstin;
+	private String cin;
 
 	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinTable(name = "Customer_Roles", joinColumns = { @JoinColumn(name = "Customer_Id") }, inverseJoinColumns = {

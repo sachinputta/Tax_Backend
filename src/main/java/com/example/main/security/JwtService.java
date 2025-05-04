@@ -69,7 +69,7 @@ public class JwtService {
 		Map<String, Object> claims = new HashMap<>();
 
 		return Jwts.builder().claims().add(claims).subject(username).issuedAt(new Date(System.currentTimeMillis()))
-				.expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365)) // 1 year
+				.expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 12)) // 12 hours
 				.and().signWith(getSecretKey()).compact();
 
 	}

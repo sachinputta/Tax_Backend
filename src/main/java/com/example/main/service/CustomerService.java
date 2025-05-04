@@ -1,11 +1,15 @@
 package com.example.main.service;
 
 import java.util.List;
+import java.util.Optional;
 
+import com.example.main.dto.CustomerRegistrationDto;
 import com.example.main.entity.Customer;
 import com.example.main.entity.CustomerRegistration;
 import com.example.main.entity.ItemsList;
 import com.example.main.entity.PasswordChange;
+import com.example.main.entity.ProformaInvoice;
+import com.example.main.entity.Quote;
 
 public interface CustomerService {
 
@@ -19,7 +23,7 @@ public interface CustomerService {
 
 	List<ItemsList> getAllItems();
 
-	ItemsList getItemById(Long id);
+	public List<ItemsList> getItemsByCustomerId(String customerId);
 
 	ItemsList createItem(ItemsList item);
 
@@ -33,10 +37,21 @@ public interface CustomerService {
 
 	Customer updateCustomer(String customerId, Customer updatedCustomer);
 
-	CustomerRegistration saveCustomer(CustomerRegistration customer);
-	
-	public List<CustomerRegistration> getAllRegisterCustomers();
-	
-	public void deleteRegisterCustomerById(String customerId);
+	CustomerRegistration saveCustomerRegistration(CustomerRegistrationDto dto, String customerId);
 
+	CustomerRegistration updateCustomerRegistration(Long registrationId, CustomerRegistrationDto dto);
+
+	void deleteCustomerRegistration(Long registrationId);
+
+	List<CustomerRegistration> getRegistrationsByCustomerId(String customerId);
+
+	public Optional<CustomerRegistration> viewCustomerRegistrationById(Long registrationId);
+	
+	public Quote saveQuote(Quote quote);
+	
+	public List<Quote> getQuotesByCustomerId(String customerId);
+	
+	public ProformaInvoice saveProformaInvoice(ProformaInvoice invoice);
+	
+	public List<ProformaInvoice> getProformaInvoicesByCustomerId(String customerId);
 }

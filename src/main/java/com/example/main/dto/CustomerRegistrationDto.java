@@ -1,37 +1,18 @@
-package com.example.main.entity;
+package com.example.main.dto;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-
-@Entity
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class CustomerRegistration {
+public class CustomerRegistrationDto {
 
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long registrationId;   // Auto-generated
-
-    private String customerId;  // FK reference to Customer.customerId
-
-    // Customer Details
     private String customerType;
     private String salutation;
     private String firstName;
     private String lastName;
     private String companyName;
     private String customerEmail;
+//    private String customerPassword;
     private String phoneNumber;
     private String mobileNumber;
 
@@ -69,4 +50,5 @@ public class CustomerRegistration {
     private String contactPersonEmail;
     private String contactPersonPhone;
     private String notes;
+
 }

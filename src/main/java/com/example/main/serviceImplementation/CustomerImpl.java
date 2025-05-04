@@ -1,5 +1,6 @@
 package com.example.main.serviceImplementation;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -7,14 +8,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.main.dto.CustomerRegistrationDto;
 import com.example.main.entity.Customer;
 import com.example.main.entity.CustomerRegistration;
+import com.example.main.entity.Item;
 import com.example.main.entity.ItemsList;
 import com.example.main.entity.PasswordChange;
+import com.example.main.entity.ProformaInvoice;
+import com.example.main.entity.ProformaItem;
+import com.example.main.entity.Quote;
 import com.example.main.exception.ItemNotFoundException;
 import com.example.main.repository.CustomerRegistrationRepository;
 import com.example.main.repository.CustomerRepository;
 import com.example.main.repository.ItemsListRepository;
+import com.example.main.repository.ProformaInvoiceRepository;
+import com.example.main.repository.QuoteRepository;
 import com.example.main.service.CustomerService;
 
 @Service
@@ -25,6 +33,14 @@ public class CustomerImpl implements CustomerService {
 
 	@Autowired
 	private ItemsListRepository itemsListRepository;
+
+	@Autowired
+	private QuoteRepository quoteRepository;
+	
+
+	@Autowired
+	private ProformaInvoiceRepository proformaInvoiceRepository;
+
 
 	@Autowired
 	private CustomerRegistrationRepository customerRegistrationRepository;
@@ -95,9 +111,13 @@ public class CustomerImpl implements CustomerService {
 	}
 
 	@Override
-	public ItemsList getItemById(Long id) {
-		return itemsListRepository.findById(id)
-				.orElseThrow(() -> new ItemNotFoundException("Item with ID " + id + " not found."));
+	public List<ItemsList> getItemsByCustomerId(String customerId) {
+		// Fetch the customer by customerId
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new RuntimeException("Customer not found"));
+
+		// Fetch the list of items based on the customer
+		return itemsListRepository.findByCustomer(customer);
 	}
 
 	@Override
@@ -143,6 +163,9 @@ public class CustomerImpl implements CustomerService {
 			existingCustomer.setCompanyName(updatedCustomer.getCompanyName());
 			existingCustomer.setPhoneNumber(updatedCustomer.getPhoneNumber());
 			existingCustomer.setImagePath(updatedCustomer.getImagePath());
+			existingCustomer.setPan(updatedCustomer.getPan());
+			existingCustomer.setGstin(updatedCustomer.getGstin());
+			existingCustomer.setCin(updatedCustomer.getCin());
 			existingCustomer.setState(updatedCustomer.getState());
 			existingCustomer.setCountry(updatedCustomer.getCountry());
 
@@ -153,18 +176,214 @@ public class CustomerImpl implements CustomerService {
 	}
 
 	@Override
-	public CustomerRegistration saveCustomer(CustomerRegistration customer) {
-		return customerRegistrationRepository.save(customer);
+	public CustomerRegistration saveCustomerRegistration(CustomerRegistrationDto dto, String customerId) {
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new RuntimeException("Customer not found with ID: " + customerId));
+
+		CustomerRegistration registration = mapDtoToEntity(dto);
+		registration.setCustomerId(customerId);
+		return customerRegistrationRepository.save(registration);
 	}
 
 	@Override
-	public List<CustomerRegistration> getAllRegisterCustomers() {
-		return customerRegistrationRepository.findAll();
+	public CustomerRegistration updateCustomerRegistration(Long registrationId, CustomerRegistrationDto dto) {
+		CustomerRegistration existingRegistration = customerRegistrationRepository.findById(registrationId)
+				.orElseThrow(() -> new RuntimeException("Registration not found with ID: " + registrationId));
+
+		// Update fields
+		updateEntityFromDto(existingRegistration, dto);
+		return customerRegistrationRepository.save(existingRegistration);
 	}
 
 	@Override
-	public void deleteRegisterCustomerById(String customerId) {
-		customerRegistrationRepository.deleteById(customerId);
+	public void deleteCustomerRegistration(Long registrationId) {
+		if (!customerRegistrationRepository.existsById(registrationId)) {
+			throw new RuntimeException("Registration not found with ID: " + registrationId);
+		}
+		customerRegistrationRepository.deleteById(registrationId);
 	}
+
+	// Utility Methods
+
+	private CustomerRegistration mapDtoToEntity(CustomerRegistrationDto dto) {
+		CustomerRegistration registration = new CustomerRegistration();
+
+		registration.setCustomerType(dto.getCustomerType());
+		registration.setSalutation(dto.getSalutation());
+		registration.setFirstName(dto.getFirstName());
+		registration.setLastName(dto.getLastName());
+		registration.setCompanyName(dto.getCompanyName());
+		registration.setCustomerEmail(dto.getCustomerEmail());
+//        registration.setCustomerPassword(dto.getCustomerPassword());
+		registration.setPhoneNumber(dto.getPhoneNumber());
+		registration.setMobileNumber(dto.getMobileNumber());
+
+		registration.setBillingStreet(dto.getBillingStreet());
+		registration.setBillingCity(dto.getBillingCity());
+		registration.setBillingState(dto.getBillingState());
+		registration.setBillingCountry(dto.getBillingCountry());
+		registration.setBillingZip(dto.getBillingZip());
+
+		registration.setShippingStreet(dto.getShippingStreet());
+		registration.setShippingCity(dto.getShippingCity());
+		registration.setShippingState(dto.getShippingState());
+		registration.setShippingCountry(dto.getShippingCountry());
+		registration.setShippingZip(dto.getShippingZip());
+
+		registration.setTaxId(dto.getTaxId());
+		registration.setPan(dto.getPan());
+		registration.setSupplyState(dto.getSupplyState());
+		registration.setCurrency(dto.getCurrency());
+
+		registration.setPaymentTerms(dto.getPaymentTerms());
+		registration.setCreditLimit(dto.getCreditLimit());
+		registration.setBankName(dto.getBankName());
+		registration.setAccountNumber(dto.getAccountNumber());
+		registration.setIfscCode(dto.getIfscCode());
+		registration.setPreferredPaymentMethod(dto.getPreferredPaymentMethod());
+
+		registration.setWebsiteUrl(dto.getWebsiteUrl());
+		registration.setContactPersonName(dto.getContactPersonName());
+		registration.setContactPersonEmail(dto.getContactPersonEmail());
+		registration.setContactPersonPhone(dto.getContactPersonPhone());
+		registration.setNotes(dto.getNotes());
+
+		return registration;
+	}
+
+	private void updateEntityFromDto(CustomerRegistration entity, CustomerRegistrationDto dto) {
+		entity.setCustomerType(dto.getCustomerType());
+		entity.setSalutation(dto.getSalutation());
+		entity.setFirstName(dto.getFirstName());
+		entity.setLastName(dto.getLastName());
+		entity.setCompanyName(dto.getCompanyName());
+		entity.setCustomerEmail(dto.getCustomerEmail());
+//        entity.setCustomerPassword(dto.getCustomerPassword());
+		entity.setPhoneNumber(dto.getPhoneNumber());
+		entity.setMobileNumber(dto.getMobileNumber());
+
+		entity.setBillingStreet(dto.getBillingStreet());
+		entity.setBillingCity(dto.getBillingCity());
+		entity.setBillingState(dto.getBillingState());
+		entity.setBillingCountry(dto.getBillingCountry());
+		entity.setBillingZip(dto.getBillingZip());
+
+		entity.setShippingStreet(dto.getShippingStreet());
+		entity.setShippingCity(dto.getShippingCity());
+		entity.setShippingState(dto.getShippingState());
+		entity.setShippingCountry(dto.getShippingCountry());
+		entity.setShippingZip(dto.getShippingZip());
+
+		entity.setTaxId(dto.getTaxId());
+		entity.setPan(dto.getPan());
+		entity.setSupplyState(dto.getSupplyState());
+		entity.setCurrency(dto.getCurrency());
+
+		entity.setPaymentTerms(dto.getPaymentTerms());
+		entity.setCreditLimit(dto.getCreditLimit());
+		entity.setBankName(dto.getBankName());
+		entity.setAccountNumber(dto.getAccountNumber());
+		entity.setIfscCode(dto.getIfscCode());
+		entity.setPreferredPaymentMethod(dto.getPreferredPaymentMethod());
+
+		entity.setWebsiteUrl(dto.getWebsiteUrl());
+		entity.setContactPersonName(dto.getContactPersonName());
+		entity.setContactPersonEmail(dto.getContactPersonEmail());
+		entity.setContactPersonPhone(dto.getContactPersonPhone());
+		entity.setNotes(dto.getNotes());
+	}
+
+	@Override
+	public List<CustomerRegistration> getRegistrationsByCustomerId(String customerId) {
+		return customerRegistrationRepository.findByCustomerId(customerId);
+	}
+
+	@Override
+	public Optional<CustomerRegistration> viewCustomerRegistrationById(Long registrationId) {
+		return customerRegistrationRepository.findById(registrationId);
+	}
+
+
+	@Override
+	public Quote saveQuote(Quote quote) {
+	    // Fetch customer by email from the Quote
+	    String customerEmail = quote.getCustomerEmail();
+
+	    // Fetch customer entity
+	    CustomerRegistration customer = customerRegistrationRepository.findByCustomerEmail(customerEmail)
+	            .orElseThrow(() -> new RuntimeException("Customer with email " + customerEmail + " not found"));
+
+	    // Set customer info
+	    quote.setCustomer(customer);
+	    quote.setCustomerId(customer.getCustomerId());
+
+	    // Set today's date
+	    quote.setDate(LocalDate.now());
+
+	    // Generate quoteCode
+	    long count = quoteRepository.count(); 
+	    String quoteCode = String.format("QT-%05d", count + 1);
+	    quote.setQuoteCode(quoteCode);
+
+	    // Associate each item with the quote
+	    for (Item item : quote.getItems()) {
+	        item.setQuote(quote);
+	    }
+
+	    return quoteRepository.save(quote);
+	}
+
+
+	
+	@Override
+	public List<Quote> getQuotesByCustomerId(String customerId) {
+	    return quoteRepository.findByCustomerId(customerId);
+	}
+	
+	
+	@Override
+	public ProformaInvoice saveProformaInvoice(ProformaInvoice invoice) {
+	    // 1. Lookup customer by email
+	    String customerEmail = invoice.getCustomerEmail();
+	    CustomerRegistration customer = customerRegistrationRepository.findByCustomerEmail(customerEmail)
+	            .orElseThrow(() -> new RuntimeException("Customer with email " + customerEmail + " not found"));
+
+	    // 2. Set customer reference and ID
+	    invoice.setCustomer(customer);
+	    invoice.setCustomerId(customer.getCustomerId());
+
+	    // 3. Set current date
+	    invoice.setDate(LocalDate.now());
+
+	    // 4. Generate proformaCode like PI-00001
+	    long count = proformaInvoiceRepository.count();
+	    String proformaCode = String.format("PI-%05d", count + 1);
+	    invoice.setProformaCode(proformaCode);
+
+	    // 5. Set up each item and associate with invoice
+	    List<ProformaItem> items = invoice.getItems();
+	    for (int i = 0; i < items.size(); i++) {
+	        ProformaItem item = items.get(i);
+	        item.setProformaInvoice(invoice);
+
+	        // Generate unique piId like PI-00001-01
+	        item.setPiId(proformaCode + "-" + String.format("%02d", i + 1));
+
+	        // Calculate netCharges
+	        if (item.getCharges() == null) item.setCharges(0.0);
+	        if (item.getDiscount() == null) item.setDiscount(0.0);
+	        item.setNetCharges(item.getCharges() - item.getDiscount());
+	    }
+
+	    // 6. Save to DB
+	    return proformaInvoiceRepository.save(invoice);
+	}
+	
+	
+	@Override
+	public List<ProformaInvoice> getProformaInvoicesByCustomerId(String customerId) {
+	    return proformaInvoiceRepository.findByCustomerId(customerId);
+	}
+
 
 }
