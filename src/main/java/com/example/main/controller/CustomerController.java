@@ -1,8 +1,6 @@
 package com.example.main.controller;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,22 +9,33 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.main.dto.CreateItemRequest;
 import com.example.main.dto.CustomerRegistrationDto;
+import com.example.main.dto.InvoicePDFRequest;
 import com.example.main.entity.Customer;
 import com.example.main.entity.CustomerRegistration;
 import com.example.main.entity.ItemsList;
 import com.example.main.entity.PasswordChange;
 import com.example.main.entity.ProformaInvoice;
 import com.example.main.entity.Quote;
+import com.example.main.entity.pdfRequest;
 import com.example.main.repository.CustomerRepository;
+import com.example.main.repository.ProformaInvoiceRepository;
+import com.example.main.repository.QuoteRepository;
 import com.example.main.service.CustomerService;
+import com.example.main.service.EmailService;
+import com.example.main.util.ProformaInvoicePdfGenerator;
+import com.example.main.util.QuotePdfGenerator;
 
-import jakarta.persistence.criteria.Path;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.core.io.ByteArrayResource;
+
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -38,7 +47,64 @@ public class CustomerController {
 	@Autowired
 	private CustomerRepository customerRepository;
 
-	private static final String UPLOAD_DIR = "uploads/profile-images/";
+	@Autowired
+	private QuoteRepository quoteRepository;
+
+	@Autowired
+	private EmailService emailService;
+
+	@PreAuthorize("hasAnyRole('Customer')")
+	@PostMapping("/invoice/send/{quoteCode}")
+	public String sendInvoiceEmail(@PathVariable String quoteCode) {
+		Quote quote = quoteRepository.findById(quoteCode).orElse(null);
+
+		if (quote == null) {
+			return "Quote not found!";
+		}
+
+		byte[] pdfBytes = QuotePdfGenerator.generateQuotePdf(quote);
+
+		String senderName = quote.getCustomer().getCompanyName();
+		// Email message content
+		String messageText = "Dear " + quote.getCustomerName() + ",\n\n" + "Please find attached your quote.\n\n"
+				+ "Regards,\n" + senderName;
+
+		try {
+			emailService.sendQuoteEmailWithAttachment(quote.getCustomerId(), // From: customerId (e.g., tcs@gmail.com)
+					quote.getCustomerEmail(), // To: customerEmail
+					"Quotation - " + quoteCode, messageText, pdfBytes, "Quote_" + quoteCode + ".pdf");
+			return "Quote emailed successfully.";
+		} catch (MessagingException e) {
+			return "Failed to send email.";
+		}
+	}
+
+	
+	@PreAuthorize("hasAnyRole('Customer')")
+	@PostMapping("/quotes/send/{quoteCode}")
+	public String sendQuoteEmail(@PathVariable String quoteCode) {
+		Quote quote = quoteRepository.findById(quoteCode).orElse(null);
+
+		if (quote == null) {
+			return "Quote not found!";
+		}
+
+		byte[] pdfBytes = QuotePdfGenerator.generateQuotePdf(quote);
+
+		String senderName = quote.getCustomer().getCompanyName();
+		// Email message content
+		String messageText = "Dear " + quote.getCustomerName() + ",\n\n" + "Please find attached your quote.\n\n"
+				+ "Regards,\n" + senderName;
+
+		try {
+			emailService.sendQuoteEmailWithAttachment(quote.getCustomerId(), // From: customerId (e.g., tcs@gmail.com)
+					quote.getCustomerEmail(), // To: customerEmail
+					"Quotation - " + quoteCode, messageText, pdfBytes, "Quote_" + quoteCode + ".pdf");
+			return "Quote emailed successfully.";
+		} catch (MessagingException e) {
+			return "Failed to send email.";
+		}
+	}
 
 	@PreAuthorize("hasAnyRole('Customer')")
 	@GetMapping("/getCustomerDetails/{customerId}")
@@ -157,7 +223,7 @@ public class CustomerController {
 		return ResponseEntity.ok(response);
 	}
 
-	@PreAuthorize("hasAnyRole('Customer')")
+	@PreAuthorize("hasAnyRole('Customer', 'Admin')")
 	@GetMapping("/getCustomerRegistration/{customerId}")
 	public List<CustomerRegistration> getRegistrationsByCustomerId(@PathVariable String customerId) {
 		return customerService.getRegistrationsByCustomerId(customerId);
@@ -213,7 +279,5 @@ public class CustomerController {
 		List<ProformaInvoice> invoices = customerService.getProformaInvoicesByCustomerId(customerId);
 		return ResponseEntity.ok(invoices);
 	}
-
-
 
 }

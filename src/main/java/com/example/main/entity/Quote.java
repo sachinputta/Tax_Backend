@@ -23,28 +23,28 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Quote {
-	
-	  @Id
-	    private String quoteCode; // Now the primary key (e.g., QT-00001)
 
-	    private LocalDate date = LocalDate.now(); // Auto-set to today's date
+	@Id
+	private String quoteCode; // Now the primary key (e.g., QT-00001)
 
-	    private String customerId;
+	private LocalDate date = LocalDate.now();
 
-	    private String customerName;
+	private String customerId;
 
-	    private String customerEmail;
+	private String customerName;
 
-	    @ManyToOne
-	    @JoinColumn(name = "registration_id")
-	    private CustomerRegistration customer;
+	private String customerEmail;
 
-	    @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
-	    @JsonManagedReference
-	    private List<Item> items = new ArrayList<>();
+	@ManyToOne
+	@JoinColumn(name = "registration_id")
+	private CustomerRegistration customer;
 
-	    public void addItem(Item item) {
-	        item.setQuote(this);
-	        this.items.add(item);
-	    }
+	@OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonManagedReference
+	private List<Item> items = new ArrayList<>();
+
+	public void addItem(Item item) {
+		item.setQuote(this);
+		this.items.add(item);
+	}
 }
